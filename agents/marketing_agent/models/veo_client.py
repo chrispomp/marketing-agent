@@ -3,7 +3,7 @@ import time
 from typing import Tuple
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 import vertexai
-from vertexai.preview.vision_models import VideoGenerationModel
+from vertexai.vision_models import VideoGenerationModel
 
 class VeoClient:
     def __init__(self):
