@@ -27,10 +27,15 @@ SCENE_SYS = """You split a TV script into visual scenes. Return a numbered list.
 ANIMATIC_SYS = """You are a storyboard-to-animatic producer. Produce a single concise prompt describing the overall commercial visuals, pacing, camera moves, transitions, and mood to generate a ~30-60s video."""
  
 class MarketingAgent:
-    def __init__(self):
-        self.gemini = GeminiClient()
-        self.imagen = ImagenClient()
-        self.veo = VeoClient()
+    def __init__(
+        self,
+        gemini_client: GeminiClient,
+        imagen_client: ImagenClient,
+        veo_client: VeoClient,
+    ):
+        self.gemini = gemini_client
+        self.imagen = imagen_client
+        self.veo = veo_client
 
     # FR-01
     def generate_brief(self, user_prompt: str):
