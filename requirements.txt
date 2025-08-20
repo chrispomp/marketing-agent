@@ -12,8 +12,8 @@ google-api-core==2.19.1
 # Utilities
 tenacity==9.0.0
 
-# OpenTelemetry - CORRECTED LIBRARIES
-opentelemetry-api==1.26.0
-opentelemetry-sdk==1.26.0
-opentelemetry-exporter-gcp-monitoring==1.9.0
-opentelemetry-exporter-gcp-trace==1.9.0
+# Observability
+opentelemetry-api
+opentelemetry-sdk
+opentelemetry-exporter-gcp-monitoring
+opentelemetry-exporter-gcp-trace
