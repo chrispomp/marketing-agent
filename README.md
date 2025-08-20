@@ -25,7 +25,7 @@ Enterprise-grade generative agent that produces:
 - `gcloud` CLI authenticated to your project.
 - Create a GCS bucket (or use an existing one):
   ```bash
-  export GCP_PROJECT=<your-project>
+  export GCP_PROJECT=
   export REGION=us-central1
   export VERTEX_LOCATION=us-central1
   export BUCKET_NAME=<your-unique-bucket-name>
