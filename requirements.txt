@@ -1,0 +1,12 @@
+fastapi==0.112.2
+uvicorn[standard]==0.30.6
+pydantic==2.8.2
+google-cloud-aiplatform==1.67.0
+google-cloud-storage==2.18.2
+google-cloud-logging==3.11.2
+google-api-core==2.19.1
+tenacity==9.0.0
+opentelemetry-api==1.26.0
+opentelemetry-sdk==1.26.0
+opentelemetry-exporter-gcp-monitoring==2.20.0
+opentelemetry-exporter-gcp-trace==2.20.0

@@ -1,0 +1,4 @@
+name: marketing-agent
+entry: app:app
+port: 8080
+description: "Enterprise-grade Marketing Agent (brief, script, storyboard, animatic) on Vertex AI"
