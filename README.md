@@ -28,7 +28,7 @@ Enterprise-grade generative agent that produces:
   export GCP_PROJECT=
   export REGION=us-central1
   export VERTEX_LOCATION=us-central1
-  export BUCKET_NAME=<your-unique-bucket-name>
+  export BUCKET_NAME=marketing-agent-assets
   gsutil mb -p $GCP_PROJECT -l $REGION gs://$BUCKET_NAME
   ```
 ## Configuration
