@@ -1,5 +1,0 @@
-google-adk
-google-cloud-aiplatform
-python-dotenv
-google-cloud-storage
-google-api-python-client
