@@ -1,0 +1,8 @@
+# Core ADK and GCP libraries
+google-adk
+google-cloud-aiplatform
+python-dotenv
+
+# Required for direct REST API calls with auth
+google-api-python-client
+google-auth-httplib2
