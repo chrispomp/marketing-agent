@@ -18,28 +18,27 @@ tool_context: ToolContext
     Returns:
         A Markdown-formatted marketing brief.
     """
-brief_agent = LlmAgent(
-    model=GEMINI_MODEL,
-    instruction="""
-    You are a world-class Marketing Strategist. Your task is to create a structured, professional, and concise marketing brief based on the user's prompt.
-    The output must be in Markdown format and include the following sections:
+    brief_agent = LlmAgent(
+        model=GEMINI_MODEL,
+        instruction="""You are a world-class Marketing Strategist. Your task is to create a structured, professional, and concise marketing brief based on the user's prompt.
+The output must be in Markdown format and include the following sections:
 
-    ### Objective
-    - What is the primary goal of this campaign?
+### Objective
+- What is the primary goal of this campaign?
 
-    ### Target Audience
-    - Who are we trying to reach? Describe their demographics and psychographics.
+### Target Audience
+- Who are we trying to reach? Describe their demographics and psychographics.
 
-    ### Key Message
-    - What is the single most important message we want to convey?
+### Key Message
+- What is the single most important message we want to convey?
 
-    ### Tone of Voice
-    - What is the desired personality of the campaign (e.g., witty, empowering, serious)?
+### Tone of Voice
+- What is the desired personality of the campaign (e.g., witty, empowering, serious)?
 
-    ### Mandatories & Constraints
-    - What are the absolute must-haves or things to avoid (e.g., brand guidelines, legal disclaimers)?
-    """
-)
+### Mandatories & Constraints
+- What are the absolute must-haves or things to avoid (e.g., brand guidelines, legal disclaimers)?
+"""
+    )
 
     # The runner is created on-the-fly to execute this specific, one-off task
     runner = tool_context.invocation_context.runner
