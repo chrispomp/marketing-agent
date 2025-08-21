@@ -6,8 +6,10 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.metrics import MeterProvider
 # [MODIFIED] Import paths updated for the new, stable Google Cloud exporters
-from opentelemetry.exporter.gcp.monitoring import GoogleCloudMonitoringMetricsExporter
-from opentelemetry.exporter.gcp.trace import GoogleCloudTraceExporter
+from opentelemetry.exporter.cloud_monitoring import (
+    CloudMonitoringMetricsExporter,
+)
+from opentelemetry.exporter.cloud_trace import CloudTraceSpanExporter
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 
@@ -31,7 +33,7 @@ def setup_logging_metrics():
     # Set up the TracerProvider for Cloud Trace
     tracer_provider = TracerProvider(resource=resource)
     # [MODIFIED] Use the updated GoogleCloudTraceExporter class
-    trace_exporter = GoogleCloudTraceExporter()
+    trace_exporter = CloudTraceSpanExporter()
     tracer_provider.add_span_processor(BatchSpanProcessor(trace_exporter))
     trace.set_tracer_provider(tracer_provider)
 
