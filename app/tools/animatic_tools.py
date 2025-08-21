@@ -46,28 +46,30 @@ Example Output Prompt:
 
 
 class GenerateAnimaticTool(Tool):
-    """A tool to generate a video animatic from a prompt using Veo 3 via an LRO."""
+    """A tool to generate a video animatic from a prompt using Veo via an LRO."""
 
     def __init__(self):
         super().__init__(
             name="generate_animatic_video",
-            description="Generates a short video animatic from a prompt using Veo 3 via a Long-Running Operation.",
+            description="Generates a short video animatic from a prompt using Veo via a Long-Running Operation.",
         )
         self.api_endpoint = f"{VERTEX_LOCATION}-aiplatform.googleapis.com"
-        self.veo_model_uri = f"projects/{GCP_PROJECT}/locations/{VERTEX_LOCATION}/publishers/google/models/veo-3.0-generate-preview"
+        # The full model URI is needed for the Model object
+        self.model_name = f"projects/{GCP_PROJECT}/locations/{VERTEX_LOCATION}/publishers/google/models/veo-3.0-generate-preview"
         
     def _call(self, video_prompt: str) -> str:
         try:
-            client_options = ClientOptions(api_endpoint=self.api_endpoint)
-            client = aiplatform.gapic.PredictionServiceClient(client_options=client_options)
+            # Use the standard PredictionServiceClient for LROs
+            client_options = {"api_endpoint": self.api_endpoint}
+            client = aiplatform.PredictionServiceClient(client_options=client_options)
             
+            model = aiplatform.Model(model_name=self.model_name)
+
             gcs_output_path = f"gs://{BUCKET_NAME}/animatics/"
             logging.info(f"Starting Veo LRO with prompt: '{video_prompt}'. Outputting to: {gcs_output_path}")
 
-            instance_dict = {"prompt": video_prompt}
-            instance = json_format.ParseDict(instance_dict, Value())
-
-            parameters_dict = {
+            # Parameters are passed directly as a dict
+            parameters = {
                 "storageUri": gcs_output_path,
                 "durationSeconds": 8,
                 "aspectRatio": "16:9",
@@ -76,23 +78,29 @@ class GenerateAnimaticTool(Tool):
                 "personGeneration": "allow_adult",
                 "sampleCount": 1
             }
-            parameters = json_format.ParseDict(parameters_dict, Value())
             
-            # This is a synchronous wait for simplicity in an ADK tool.
-            # It will block until the LRO is complete or times out.
-            response = client.predict(
-                endpoint=self.veo_model_uri,
-                instances=[instance],
+            # Use long_running_predict for robust LRO handling
+            lro_job = model.long_running_predict(
+                instances=[{"prompt": video_prompt}],
                 parameters=parameters,
             )
             
-            logging.info("Veo LRO complete. Parsing response.")
+            logging.info(f"Veo LRO job started: {lro_job}. Waiting for result...")
+
+            # This blocks until the LRO is complete
+            result = lro_job.result()
             
-            # The synchronous client call returns the final result directly
-            # The result is an array of predictions, we take the first one
-            prediction = response.predictions[0]
-            if "gcsUri" in prediction:
-                final_video_uri = prediction['gcsUri']
+            logging.info("Veo LRO complete. Parsing response.")
+
+            # The result object contains the predictions
+            if not result.predictions:
+                logging.error("Veo LRO finished but returned no predictions.")
+                return "Error: Video generation failed to produce a result."
+
+            # Robustly parse the prediction to find the GCS URI
+            prediction = result.predictions[0]
+            if isinstance(prediction, dict) and "gcsUri" in prediction:
+                final_video_uri = prediction.get("gcsUri")
                 logging.info(f"Video generation successful. GCS URI: {final_video_uri}")
                 return f"Video generation complete. Your animatic is available at: {final_video_uri}"
             else:

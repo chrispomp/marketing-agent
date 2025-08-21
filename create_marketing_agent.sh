@@ -624,11 +624,12 @@ except Exception as e:
     logging.error(f"Error initializing Vertex AI: {e}", exc_info=True)
     sys.exit(1)
     
-# Instantiate the main agent
-marketing_agent = MarketingAgent()
+# Instantiate the main agent and name it root_agent
+# THIS IS THE CRITICAL LINE THE ADK LOOKS FOR
+root_agent = MarketingAgent()
 
-# Create the FastAPI application using the ADK
-app = create_app(marketing_agent)
+# Create the FastAPI application
+app = create_app(root_agent)
 
 # Optional: Add a root endpoint for basic health checks or info
 @app.get("/")
