@@ -36,11 +36,11 @@ brief_agent = LlmAgent(
     """
 )
 
-The runner is created on-the-fly to execute this specific, one-off task
-runner = tool_context.invocation_context.runner
-final_response = ""
-async for event in runner.run_sub_agent(agent=brief_agent, user_message=prompt, invocation_context=tool_context.invocation_context):
-if event.is_final_response() and event.content:
-final_response = "".join(part.text for part in event.content.parts if part.text)
-break
-return final_response
+    # The runner is created on-the-fly to execute this specific, one-off task
+    runner = tool_context.invocation_context.runner
+    final_response = ""
+    async for event in runner.run_sub_agent(agent=brief_agent, user_message=prompt, invocation_context=tool_context.invocation_context):
+        if event.is_final_response() and event.content:
+            final_response = "".join(part.text for part in event.content.parts if part.text)
+            break
+    return final_response
