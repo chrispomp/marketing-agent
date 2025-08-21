@@ -5,10 +5,10 @@ from google.adk.agents import LlmAgent
 from google.adk.tools import FunctionTool, AgentTool
 
 # Import the tool functions
-from ..tools.brief_tool import generate_brief
-from ..tools.script_tool import generate_script
-from ..tools.storyboard_tool import generate_full_storyboard
-from ..tools.animatic_tool import generate_full_animatic
+from tools.brief_tool import generate_brief
+from tools.script_tool import generate_script
+from tools.storyboard_tool import generate_full_storyboard
+from tools.animatic_tool import generate_full_animatic
 
 # Load environment variables from .env file
 load_dotenv()
