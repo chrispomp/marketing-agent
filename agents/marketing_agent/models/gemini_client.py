@@ -1,8 +1,14 @@
 import os
 import time
-from typing import Tuple
+from typing import Tuple, Optional
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
-from vertexai.generative_models import GenerativeModel, SafetySetting
+from vertexai.generative_models import (
+    GenerativeModel,
+    SafetySetting,
+    HarmCategory,
+    HarmBlockThreshold,
+    GenerationConfig,
+)
 import vertexai
 
 class GeminiClient:
@@ -11,12 +17,14 @@ class GeminiClient:
         self.location = os.environ.get("VERTEX_LOCATION", "us-central1")
         self.model_name = os.environ.get("GEMINI_MODEL", "gemini-2.5-pro")
         vertexai.init(project=self.project, location=self.location)
-        self.model = GenerativeModel(self.model_name)
 
         # Conservative safety defaults; adjust per policy.
-        self.safety = [
-            SafetySetting.HarmBlockThreshold.HARM_BLOCK_THRESHOLD_MEDIUM  # type: ignore
-        ]
+        self.safety_settings = {
+            HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+            HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+            HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+            HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        }
 
     @retry(
         reraise=True,
@@ -24,22 +32,33 @@ class GeminiClient:
         wait=wait_exponential(multiplier=1, min=1, max=8),
         retry=retry_if_exception_type(Exception),
     )
-    def generate(self, prompt: str, system_instruction: str = "") -> Tuple[str, int, int, int]:
+    def generate(
+        self,
+        prompt: str,
+        system_instruction: Optional[str] = None,
+    ) -> Tuple[str, int, int, int]:
         """
         Returns text, tokens_in, tokens_out, latency_ms
         """
         start = time.time()
-        content = []
-        if system_instruction:
-            content.append({"role": "user", "parts": [system_instruction + "\n\n" + prompt]})
-        else:
-            content.append({"role": "user", "parts": [prompt]})
 
-        resp = self.model.generate_content(
-            content,
-            safety_settings=self.safety,
-            generation_config={"temperature": 0.4, "top_p": 0.9, "top_k": 40, "max_output_tokens": 2048},
+        model = GenerativeModel(
+            self.model_name, system_instruction=system_instruction
         )
+
+        generation_config = GenerationConfig(
+            temperature=0.4,
+            top_p=0.9,
+            top_k=40,
+            max_output_tokens=2048,
+        )
+
+        resp = model.generate_content(
+            [prompt],
+            generation_config=generation_config,
+            safety_settings=self.safety_settings,
+        )
+
         text = resp.text or ""
         usage = getattr(resp, "usage_metadata", None)
         tokens_in = getattr(usage, "prompt_token_count", 0) if usage else 0

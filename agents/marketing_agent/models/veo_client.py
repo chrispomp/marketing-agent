@@ -11,7 +11,7 @@ class VeoClient:
         self.location = os.environ.get("VERTEX_LOCATION", "us-central1")
         self.model_name = os.environ.get("VEO_MODEL", "veo-3.0")
         vertexai.init(project=self.project, location=self.location)
-        self.model = VideoGenerationModel(self.model_name)
+        self.model = VideoGenerationModel.from_pretrained(self.model_name)
 
     @retry(
         reraise=True,
@@ -22,18 +22,15 @@ class VeoClient:
     def generate_video(self, prompt: str, duration_seconds: int = 45) -> Tuple[bytes, int]:
         """
         Synchronously generate a single MP4 clip; returns (mp4_bytes, latency_ms)
-        (If your project has async long-running ops, you can adapt to poll Operation.)
         """
         start = time.time()
-        result = self.model.generate_video(
+
+        response = self.model.generate_video(
             prompt=prompt,
             duration_seconds=duration_seconds,
-            # optional params: fps, aspect_ratio, style_preset, etc.
         )
-        # Normalization across SDK versions:
-        if hasattr(result, "video_bytes"):
-            mp4_bytes = result.video_bytes
-        else:
-            mp4_bytes = result[0].video_bytes  # type: ignore
+
+        mp4_bytes = response.video_bytes
+
         latency_ms = int((time.time() - start) * 1000)
         return mp4_bytes, latency_ms
