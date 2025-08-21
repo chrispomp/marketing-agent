@@ -1,5 +1,6 @@
 import os
-from google.adk.agents import LlmAgent, ToolContext
+from google.adk.agents import LlmAgent
+from google.adk.tools import ToolContext
 from google.genai.types import Content, Part
 
 # Pin the model for production stability

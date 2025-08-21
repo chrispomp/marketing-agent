@@ -1,5 +1,6 @@
 import os
-from google.adk.agents import LlmAgent, ToolContext
+from google.adk.agents import LlmAgent
+from google.adk.tools import ToolContext
 
 # Pin the model for production stability
 GEMINI_MODEL = "gemini-2.5-flash"

@@ -4,7 +4,8 @@ import uuid
 import requests
 from typing import List, Dict, Any
 
-from google.adk.agents import LlmAgent, ToolContext
+from google.adk.agents import LlmAgent
+from google.adk.tools import ToolContext
 from ..utils.gcp import get_gcp_token, get_api_endpoint
 
 # Pin the models for production stability
