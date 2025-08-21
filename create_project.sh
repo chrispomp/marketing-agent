@@ -1,12 +1,16 @@
 #!/bin/bash
 
 # ==============================================================================
-#                 Marketing Agent Project Scaffolding Script
+#                 Marketing Agent Project Scaffolding Script (v2)
 # ==============================================================================
 # This script creates the full project structure and populates all necessary
 # files for an enterprise-grade Marketing Agent using the Google ADK.
-# It has been optimized for clarity, maintainability, and compatibility with
-# the ADK CLI and Agent Engine.
+#
+# Changelog (v2):
+# - Corrected ADK package name in requirements.txt.
+# - Updated all Python imports to use the 'google.adk' namespace as per
+#   official documentation.
+# - Updated Dockerfile CMD and README instructions for clarity and robustness.
 # ==============================================================================
 
 echo "🚀 Starting the setup for the Marketing Agent project..."
@@ -28,10 +32,11 @@ echo "✅ Created project directory structure."
 # --- Create and Populate Project Configuration Files ---
 
 # requirements.txt
-echo "📄 Creating requirements.txt with necessary libraries..."
+echo "📄 Creating requirements.txt with corrected libraries..."
 cat << 'EOF' > requirements.txt
 # Core ADK and GCP libraries
-google-adk
+# NOTE: This is the correct package name for the Agent Development Kit.
+google-cloud-agent-development-kit
 google-cloud-aiplatform
 python-dotenv
 
@@ -111,7 +116,7 @@ COPY ./app /app
 EXPOSE 8080
 
 # Command to run the application using the ADK's built-in web server.
-# This server automatically discovers the 'root_agent' in the specified module,
+# This server automatically discovers the 'root_agent' in the specified module ('main.py'),
 # serves the API, and provides a web-based test UI.
 CMD ["adk", "web", "main:root_agent", "--host", "0.0.0.0", "--port", "8080"]
 EOF
@@ -122,7 +127,7 @@ EOF
 echo "🛠️  Creating app/tools/brief_tool.py..."
 cat << 'EOF' > app/tools/brief_tool.py
 import logging
-from adk.tools import Tool
+from google.adk.tools import Tool
 from vertexai.generative_models import GenerativeModel, Part
 
 class BriefTool(Tool):
@@ -164,7 +169,7 @@ EOF
 echo "🛠️  Creating app/tools/script_tool.py..."
 cat << 'EOF' > app/tools/script_tool.py
 import logging
-from adk.tools import Tool
+from google.adk.tools import Tool
 from vertexai.generative_models import GenerativeModel, Part
 
 class ScriptTool(Tool):
@@ -208,10 +213,9 @@ import os
 import json
 import logging
 import uuid
-from adk.tools import Tool
+from google.adk.tools import Tool
 from vertexai.generative_models import GenerativeModel, Part
 from google.cloud import aiplatform
-from google.api_core.client_options import ClientOptions
 
 # Environment variables are loaded in main.py and are available here
 GCP_PROJECT = os.getenv("GCP_PROJECT")
@@ -310,7 +314,7 @@ echo "🛠️  Creating app/tools/animatic_tools.py..."
 cat << 'EOF' > app/tools/animatic_tools.py
 import os
 import logging
-from adk.tools import Tool
+from google.adk.tools import Tool
 from vertexai.generative_models import GenerativeModel, Part
 from google.cloud import aiplatform
 from google.api_core.client_options import ClientOptions
@@ -388,24 +392,26 @@ class GenerateAnimaticTool(Tool):
             }
             parameters = json_format.ParseDict(parameters_dict, Value())
             
-            # For Veo, the client.predict call is synchronous and waits for the LRO to complete.
-            response = client.predict(
+            # This updated implementation correctly uses the LRO method and waits for the result.
+            lro_response = client.predict_long_running(
                 endpoint=self.veo_model_uri,
                 instances=[instance],
                 parameters=parameters,
             )
-            
+
+            logging.info("Veo LRO initiated. Waiting for completion (this may take a few minutes)...")
+            result = lro_response.result(timeout=300) # Wait for up to 5 minutes
             logging.info("Veo LRO complete. Parsing response.")
-            
-            # The synchronous call returns the final result directly.
-            # The result is an array of predictions; we'll parse the first one.
-            prediction = response.predictions[0]
-            if "gcsUri" in prediction:
-                final_video_uri = prediction['gcsUri']
+
+            prediction_value = result.predictions[0]
+            prediction_dict = json_format.MessageToDict(prediction_value)
+
+            if "gcsUri" in prediction_dict:
+                final_video_uri = prediction_dict['gcsUri']
                 logging.info(f"Video generation successful. GCS URI: {final_video_uri}")
                 return f"Video generation complete. Your animatic is available at: {final_video_uri}"
             else:
-                logging.error(f"Veo LRO finished but no GCS URI found in response: {prediction}")
+                logging.error(f"Veo LRO finished but no GCS URI found in response: {prediction_dict}")
                 return "Error: Video generation finished, but the output path could not be determined."
 
         except Exception as e:
@@ -418,7 +424,7 @@ EOF
 # app/agents/brief_writer.py
 echo "🤖 Creating app/agents/brief_writer.py..."
 cat << 'EOF' > app/agents/brief_writer.py
-from adk.agent import Agent
+from google.adk.agents import Agent
 from app.tools.brief_tool import BriefTool
 
 class BriefWriter(Agent):
@@ -434,7 +440,7 @@ EOF
 # app/agents/script_writer.py
 echo "🤖 Creating app/agents/script_writer.py..."
 cat << 'EOF' > app/agents/script_writer.py
-from adk.agent import Agent
+from google.adk.agents import Agent
 from app.tools.script_tool import ScriptTool
 
 class ScriptWriter(Agent):
@@ -452,7 +458,7 @@ echo "🤖 Creating app/agents/storyboard_artist.py..."
 cat << 'EOF' > app/agents/storyboard_artist.py
 import json
 import logging
-from adk.agent import Agent
+from google.adk.agents import Agent
 from app.tools.storyboard_tools import ParseScriptTool, GenerateImageTool
 
 class StoryboardArtist(Agent):
@@ -510,7 +516,7 @@ EOF
 echo "🤖 Creating app/agents/animatic_creator.py..."
 cat << 'EOF' > app/agents/animatic_creator.py
 import logging
-from adk.agent import Agent
+from google.adk.agents import Agent
 from app.tools.animatic_tools import CreateVideoPromptTool, GenerateAnimaticTool
 
 class AnimaticCreator(Agent):
@@ -556,8 +562,8 @@ EOF
 # app/marketing_agent.py
 echo "👑 Creating orchestrator agent in app/marketing_agent.py..."
 cat << 'EOF' > app/marketing_agent.py
-from adk.agent import Agent
-from adk.config import STORE_CONVERSATIONS
+from google.adk.agents import Agent
+from google.adk.config import STORE_CONVERSATIONS
 from vertexai.generative_models import GenerativeModel
 
 from app.agents.brief_writer import BriefWriter
@@ -601,7 +607,7 @@ class MarketingAgent(Agent):
 EOF
 
 # app/main.py
-echo " principale Creazione di app/main.py..."
+echo "🏁 Creating main entrypoint in app/main.py..."
 cat << 'EOF' > app/main.py
 import os
 import sys
@@ -684,11 +690,9 @@ This project is built with the Python **Agent Development Kit (ADK)** and is des
 ### 1. Configure Your Environment
 
 **A. Create Project Files**
-
-If you haven't already, run the `create_project.sh` script to generate the project structure and code.
+Run the `create_project.sh` script to generate the project structure and code.
 
 **B. Set Up Environment Variables**
-
 Open the `.env` file and replace the placeholder values with your actual GCP configuration.
 
 ```ini
