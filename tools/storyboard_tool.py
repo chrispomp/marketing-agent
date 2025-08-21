@@ -8,7 +8,7 @@ from google.adk.agents import LlmAgent, ToolContext
 from ..utils.gcp import get_gcp_token, get_api_endpoint
 
 Pin the models for production stability
-GEMINI_MODEL = "gemini-1.5-pro-001"
+GEMINI_MODEL = "gemini-2.5-flash"
 IMAGEN_MODEL = "imagen-4.0-generate-001" # As specified
 
 async def _parse_script_for_scenes(script: str, tool_context: ToolContext) -> List[Dict[str, Any]]:

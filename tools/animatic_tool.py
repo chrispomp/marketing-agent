@@ -8,7 +8,7 @@ from google.adk.agents import LlmAgent, ToolContext
 from ..utils.gcp import get_gcp_token, get_api_endpoint
 
 Pin the models for production stability
-GEMINI_MODEL = "gemini-1.5-pro-001"
+GEMINI_MODEL = "gemini-2.5-flash"
 VEO_MODEL = "veo-3.0-generate-preview" # As specified
 
 async def _create_video_prompt_from_script(script: str, tool_context: ToolContext) -> str:

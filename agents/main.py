@@ -14,7 +14,7 @@ Load environment variables from .env file
 load_dotenv()
 
 Pin the orchestrator model for production stability
-ORCHESTRATOR_MODEL = "gemini-1.5-pro-001"
+ORCHESTRATOR_MODEL = "gemini-2.5-flash"
 
 --- 1. Define Specialist Agents ---
 brief_writer_agent = LlmAgent(
