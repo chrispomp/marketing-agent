@@ -11,7 +11,7 @@ class StoryboardArtist(Agent):
             name="StoryboardArtist",
             description="Use this agent when the user wants to create or generate a visual storyboard from a script.",
         )
-        # These tools are orchestrated by the agent's resolve method, not directly exposed to the orchestrator.
+        # These tools are orchestrated internally by the agent's resolve method.
         self._parse_tool = ParseScriptTool()
         self._image_tool = GenerateImageTool()
 
@@ -37,20 +37,18 @@ class StoryboardArtist(Agent):
 
         logging.info(f"StoryboardArtist: Found {len(scenes)} scenes. Generating images...")
         
-        # Step 2: Generate image for each scene
+        # Step 2: Generate an image for each scene
         image_urls = []
         for i, scene in enumerate(scenes, 1):
             desc = scene.get("description")
             if desc:
                 logging.info(f"Generating image for scene {i}: {desc}")
                 image_url = self._image_tool(desc)
-                if "Error:" in image_url:
-                    # If one image fails, we append the error and continue
-                    image_urls.append(f"Scene {i} failed: {image_url}")
-                else:
-                    image_urls.append(image_url)
+                # Append the result, whether it's a URL or an error message
+                image_urls.append(image_url)
             else:
-                 image_urls.append(f"Scene {i} had no description and was skipped.")
+                image_urls.append(f"Scene {i} had no description and was skipped.")
 
+        # Format the final output for the user
         result = "Here is your storyboard:\n" + "\n".join([f"- Scene {i+1}: {url}" for i, url in enumerate(image_urls)])
         return result

@@ -55,7 +55,7 @@ class GenerateAnimaticTool(Tool):
         )
         self.api_endpoint = f"{VERTEX_LOCATION}-aiplatform.googleapis.com"
         self.veo_model_uri = f"projects/{GCP_PROJECT}/locations/{VERTEX_LOCATION}/publishers/google/models/veo-3.0-generate-preview"
-        
+            
     def _call(self, video_prompt: str) -> str:
         try:
             client_options = ClientOptions(api_endpoint=self.api_endpoint)
@@ -69,7 +69,7 @@ class GenerateAnimaticTool(Tool):
 
             parameters_dict = {
                 "storageUri": gcs_output_path,
-                "durationSeconds": 8,
+                "durationSeconds": 8, # Fixed per Veo 3 preview documentation
                 "aspectRatio": "16:9",
                 "resolution": "720p",
                 "generateAudio": True,
@@ -78,8 +78,7 @@ class GenerateAnimaticTool(Tool):
             }
             parameters = json_format.ParseDict(parameters_dict, Value())
             
-            # This is a synchronous wait for simplicity in an ADK tool.
-            # It will block until the LRO is complete or times out.
+            # For Veo, the client.predict call is synchronous and waits for the LRO to complete.
             response = client.predict(
                 endpoint=self.veo_model_uri,
                 instances=[instance],
@@ -88,8 +87,8 @@ class GenerateAnimaticTool(Tool):
             
             logging.info("Veo LRO complete. Parsing response.")
             
-            # The synchronous client call returns the final result directly
-            # The result is an array of predictions, we take the first one
+            # The synchronous call returns the final result directly.
+            # The result is an array of predictions; we'll parse the first one.
             prediction = response.predictions[0]
             if "gcsUri" in prediction:
                 final_video_uri = prediction['gcsUri']

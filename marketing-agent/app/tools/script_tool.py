@@ -24,7 +24,7 @@ Transform the provided brief/prompt into a complete script.
     def _call(self, prompt_or_brief: str) -> str:
         """Invokes Gemini 2.5 Pro to generate the script."""
         try:
-            logging.info("Generating script...")
+            logging.info("Generating script from brief/prompt...")
             full_prompt = [
                 Part.from_text(self.system_prompt),
                 Part.from_text(f"Input Brief/Prompt: {prompt_or_brief}")

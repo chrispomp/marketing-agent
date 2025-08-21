@@ -1,7 +1,0 @@
-# Core ADK and GCP libraries
-google-cloud-aiplatform[adk,agent_engines]
-python-dotenv
-
-# Required for direct REST API calls with auth (used by your tools)
-google-api-python-client
-google-auth-httplib2

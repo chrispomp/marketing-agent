@@ -6,24 +6,19 @@ This project is built with the Python **Agent Development Kit (ADK)** and is des
 
 ## ✨ Features
 
-* **Marketing Brief Generation**: Converts high-level ideas into structured Markdown briefs.
-* **Commercial Script Generation**: Writes industry-standard scripts from a brief or prompt.
-* **Storyboard Generation**: Parses a script and generates a sequence of images (using Imagen 4) for each key scene.
-* **Animatic Generation**: Synthesizes a script into a prompt and generates a short video (using Veo 3) via a Long-Running Operation.
+-   **Marketing Brief Generation**: Converts high-level ideas into structured Markdown briefs.
+-   **Commercial Script Generation**: Writes industry-standard scripts from a brief or prompt.
+-   **Storyboard Generation**: Parses a script and generates a sequence of images (using Imagen 4) for each key scene.
+-   **Animatic Generation**: Synthesizes a script into a prompt and generates a short video (using Veo 3).
 
 ## 🛠️ Prerequisites
 
 1.  **Google Cloud Project**: A GCP project with billing enabled.
-2.  **APIs Enabled**: Ensure the following APIs are enabled in your project:
-    * Vertex AI API (`aiplatform.googleapis.com`)
-    * Cloud Storage (`storage.googleapis.com`)
-    * Artifact Registry (`artifactregistry.googleapis.com`)
-    * Cloud Run (`run.googleapis.com`)
-    * Cloud Build (`cloudbuild.googleapis.com`)
+2.  **APIs Enabled**: Ensure these APIs are enabled: `aiplatform.googleapis.com`, `storage.googleapis.com`, `artifactregistry.googleapis.com`, `run.googleapis.com`, `cloudbuild.googleapis.com`.
 3.  **GCS Bucket**: A Google Cloud Storage bucket for storing generated assets.
 4.  **Permissions**: Your service account (or local user) must have these IAM roles:
     * `Vertex AI User`
-    * `Storage Object Admin` (on the assets bucket)
+    * `Storage Object Admin`
     * `Cloud Run Admin`
     * `Artifact Registry Writer`
     * `Service Account User`
@@ -32,13 +27,13 @@ This project is built with the Python **Agent Development Kit (ADK)** and is des
     * [Docker](https://www.docker.com/products/docker-desktop/)
     * Python 3.11+
 
-## 🚀 Step-by-Step Deployment
+## 🚀 Local Development
 
 ### 1. Configure Your Environment
 
-**A. Create the Project Files**
+**A. Create Project Files**
 
-Run the `create_marketing_agent.sh` script to generate the project structure and code.
+If you haven't already, run the `create_project.sh` script to generate the project structure and code.
 
 **B. Set Up Environment Variables**
 
@@ -49,5 +44,4 @@ Open the `.env` file and replace the placeholder values with your actual GCP con
 GCP_PROJECT="your-gcp-project-id"
 REGION="us-central1"
 VERTEX_LOCATION="us-central1"
-BUCKET_NAME="your-unique-bucket-name"
-
+BUCKET_NAME="your-unique-gcs-bucket-name"

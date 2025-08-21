@@ -12,17 +12,18 @@ STORE_CONVERSATIONS = True
 
 class MarketingAgent(Agent):
     """
-    A creative co-pilot that orchestrates brief writing, script writing, 
-    storyboarding, and animatic creation by routing tasks to specialized sub-agents.
+    An orchestrator agent that acts as a creative co-pilot. It routes tasks 
+    for brief writing, script writing, storyboarding, and animatic creation 
+    to specialized sub-agents.
     """
     def __init__(self):
         super().__init__(
             name="MarketingAgent",
-            description="A creative co-pilot for marketing content generation.",
+            description="A creative co-pilot for generating marketing content like briefs, scripts, storyboards, and animatics.",
             model=GenerativeModel("gemini-2.5-pro")
         )
         
-        # Add the specialized sub-agents. The orchestrator will use their
+        # Add the specialized sub-agents. The orchestrator uses their
         # descriptions to decide which one to route a user's request to.
         self.add_sub_agent(BriefWriter())
         self.add_sub_agent(ScriptWriter())
@@ -31,10 +32,11 @@ class MarketingAgent(Agent):
 
     def resolve(self, prompt: str) -> str:
         """
-        This is the main entry point for the Marketing Agent.
-        It uses Gemini 2.5's reasoning to select the correct sub-agent.
+        Main entry point for the Marketing Agent. It uses Gemini's reasoning
+        to select and delegate to the correct sub-agent.
         """
-        # The base Agent class's resolve method handles routing to the correct 
-        # sub-agent based on its description and tools. For sub-agents with 
-        # custom resolve methods (like StoryboardArtist), that method will be called.
+        # The base Agent class's resolve method handles the routing logic.
+        # It matches the user's prompt against the sub-agents' descriptions.
+        # For sub-agents with custom resolve methods (like StoryboardArtist),
+        # that method will be automatically called.
         return super().resolve(prompt)

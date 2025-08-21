@@ -21,16 +21,16 @@ class AnimaticCreator(Agent):
         """
         logging.info("AnimaticCreator: Beginning animatic creation process.")
         
-        # Step 1: Synthesize script into a video prompt
+        # Step 1: Synthesize script into a detailed video prompt
         video_prompt = self._prompt_tool(prompt)
         
         if "Error:" in video_prompt:
             logging.error(f"Failed to create video prompt. Response: {video_prompt}")
             return video_prompt
 
-        logging.info(f"AnimaticCreator: Generated video prompt. Now starting video generation.")
+        logging.info("AnimaticCreator: Generated video prompt. Now starting video generation.")
         
-        # Acknowledge the long-running operation to the user
+        # Acknowledge the long-running operation to the user before starting
         print("Starting animatic generation. This may take a few minutes...")
 
         # Step 2: Generate video with Veo

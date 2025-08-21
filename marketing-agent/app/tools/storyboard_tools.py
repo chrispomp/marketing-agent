@@ -7,7 +7,7 @@ from vertexai.generative_models import GenerativeModel, Part
 from google.cloud import aiplatform
 from google.api_core.client_options import ClientOptions
 
-# Environment variables are loaded in main.py
+# Environment variables are loaded in main.py and are available here
 GCP_PROJECT = os.getenv("GCP_PROJECT")
 VERTEX_LOCATION = os.getenv("VERTEX_LOCATION")
 BUCKET_NAME = os.getenv("BUCKET_NAME")
@@ -44,8 +44,9 @@ Example Output:
                 Part.from_text(f"Script to analyze: {script}")
             ]
             response = self.model.generate_content(full_prompt)
+            # Clean up potential markdown code fences from the LLM response
             cleaned_response = response.text.strip().replace("```json", "").replace("```", "")
-            json.loads(cleaned_response) # Validate JSON format
+            json.loads(cleaned_response) # Validate that the output is valid JSON
             return cleaned_response
         except Exception as e:
             logging.error(f"Error in ParseScriptTool: {e}", exc_info=True)
@@ -59,10 +60,9 @@ class GenerateImageTool(Tool):
             name="generate_storyboard_image",
             description="Generates a single storyboard image using Imagen 4 based on a scene description.",
         )
-        # Endpoint needs to be constructed with the correct region
         self.api_endpoint = f"{VERTEX_LOCATION}-aiplatform.googleapis.com"
         self.model_endpoint = f"projects/{GCP_PROJECT}/locations/{VERTEX_LOCATION}/publishers/google/models/imagen-4.0-generate-001"
-        
+            
     def _call(self, scene_description: str) -> str:
         try:
             job_id = str(uuid.uuid4())
@@ -83,15 +83,14 @@ class GenerateImageTool(Tool):
             client_options = {"api_endpoint": self.api_endpoint}
             client = aiplatform.gapic.PredictionServiceClient(client_options=client_options)
             
-            # The predict method is synchronous for Imagen
-            response = client.predict(
+            # The predict method is synchronous for Imagen and waits for completion
+            client.predict(
                 endpoint=self.model_endpoint,
                 instances=[instance],
                 parameters=parameters,
             )
             
-            # Imagen response for GCS output doesn't contain the direct path in predictions.
-            # We construct it based on the output URI we provided. Imagen creates files like '0.png'.
+            # We construct the final GCS path. Imagen creates files like '0.png' inside the directory.
             generated_image_uri = f"{gcs_output_uri}0.png"
             logging.info(f"Successfully generated image: {generated_image_uri}")
             return generated_image_uri
