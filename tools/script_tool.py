@@ -2,7 +2,7 @@ import os
 from google.adk.agents import LlmAgent, ToolContext
 from google.genai.types import Content, Part
 
-Pin the model for production stability
+# Pin the model for production stability
 GEMINI_MODEL = "gemini-2.5-flash"
 
 async def generate_script(

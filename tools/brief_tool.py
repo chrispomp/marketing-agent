@@ -1,8 +1,8 @@
 import os
 from google.adk.agents import LlmAgent, ToolContext
 
-Pin the model for production stability
-GEMINI_MODEL = "gemini-1.5-pro-001"
+# Pin the model for production stability
+GEMINI_MODEL = "gemini-2.5-flash"
 
 async def generate_brief(
 prompt: str,
