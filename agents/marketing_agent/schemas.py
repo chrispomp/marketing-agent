@@ -42,10 +42,14 @@ class AnimaticRequest(BaseModel):
     script: str
     duration_seconds: int = 45  # target 30-60
 
-class AnimaticResponse(BaseModel):
-    gcs_url: str
-    operation_id: Optional[str] = None
+class AnimaticJobResponse(BaseModel):
+    job_name: str
     latency_ms: Optional[int] = 0
+
+class AnimaticStatusResponse(BaseModel):
+    status: str
+    gcs_url: Optional[str] = None
+    error: Optional[dict] = None
 
 class ChatTurn(BaseModel):
     messages: List[ChatMessage]

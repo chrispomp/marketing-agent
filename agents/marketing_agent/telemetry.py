@@ -6,8 +6,8 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.metrics import MeterProvider
 # [MODIFIED] Import paths updated for the new, stable Google Cloud exporters
-from opentelemetry.exporter.google.cloud.monitoring import GoogleCloudMonitoringMetricsExporter
-from opentelemetry.exporter.google.cloud.trace import GoogleCloudTraceExporter
+from opentelemetry.exporter.gcp.monitoring import GoogleCloudMonitoringMetricsExporter
+from opentelemetry.exporter.gcp.trace import GoogleCloudTraceExporter
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 

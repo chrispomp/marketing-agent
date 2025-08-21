@@ -1,4 +1,5 @@
 import os
+import time
 import requests
 import pytest
 
@@ -41,9 +42,35 @@ def test_storyboard_generation(script):
         assert item["gcs_url"].startswith("gs://")
 
 def test_animatic_generation(script):
-    """Tests that the animatic generation endpoint returns a GCS URL."""
-    r = requests.post(f"{BASE}/animatic", json={"script": script, "duration_seconds": 15})
-    r.raise_for_status()
-    response_json = r.json()
-    assert "gcs_url" in response_json
-    assert response_json["gcs_url"].startswith("gs://")
+    """
+    Tests that the animatic generation endpoint starts a job, can be polled,
+    and eventually returns a GCS URL.
+    """
+    # Start the job
+    r_start = requests.post(f"{BASE}/animatic", json={"script": script, "duration_seconds": 15})
+    r_start.raise_for_status()
+    response_json = r_start.json()
+    assert "job_name" in response_json
+    job_name = response_json["job_name"]
+    assert job_name
+
+    # Poll for completion
+    timeout_seconds = 180  # 3 minutes
+    start_time = time.time()
+    while time.time() - start_time < timeout_seconds:
+        r_status = requests.get(f"{BASE}/animatic/status/{job_name}")
+        r_status.raise_for_status()
+        status_json = r_status.json()
+        status = status_json["status"]
+
+        if status == "SUCCEEDED":
+            assert "gcs_url" in status_json
+            assert status_json["gcs_url"].startswith("gs://")
+            return  # Test succeeded
+
+        if status == "FAILED":
+            pytest.fail(f"Animatic generation failed: {status_json.get('error')}")
+
+        time.sleep(10)  # Wait 10 seconds before polling again
+
+    pytest.fail("Animatic generation timed out.")

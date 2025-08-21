@@ -9,7 +9,7 @@ from agents.marketing_agent.schemas import (
     BriefRequest, BriefResponse,
     ScriptRequest, ScriptResponse,
     StoryboardRequest, StoryboardResponse, StoryboardItem,
-    AnimaticRequest, AnimaticResponse,
+    AnimaticRequest, AnimaticJobResponse, AnimaticStatusResponse,
     ErrorResponse
 )
 from agents.marketing_agent.telemetry import LOGGER, REQUEST_COUNTER, ERROR_COUNTER, LATENCY_MS
@@ -81,15 +81,28 @@ def create_storyboard(req: StoryboardRequest, agent: MarketingAgent = Depends(ge
         LOGGER.exception("Storyboard generation failed")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/animatic", response_model=AnimaticResponse)
+@router.post("/animatic", response_model=AnimaticJobResponse)
 def create_animatic(req: AnimaticRequest, agent: MarketingAgent = Depends(get_marketing_agent)):
     t0 = time.time()
-    REQUEST_COUNTER.add(1, {"endpoint": "animatic"})
+    REQUEST_COUNTER.add(1, {"endpoint": "animatic_start"})
     try:
-        gcs_url = agent.generate_animatic(script=req.script, duration_seconds=req.duration_seconds)
-        LATENCY_MS.record(int((time.time()-t0)*1000), {"endpoint": "animatic"})
-        return AnimaticResponse(gcs_url=gcs_url, latency_ms=int((time.time()-t0)*1000))
+        job_name = agent.generate_animatic(script=req.script, duration_seconds=req.duration_seconds)
+        LATENCY_MS.record(int((time.time()-t0)*1000), {"endpoint": "animatic_start"})
+        return AnimaticJobResponse(job_name=job_name, latency_ms=int((time.time()-t0)*1000))
     except Exception as e:
-        ERROR_COUNTER.add(1, {"endpoint": "animatic"})
-        LOGGER.exception("Animatic generation failed")
+        ERROR_COUNTER.add(1, {"endpoint": "animatic_start"})
+        LOGGER.exception("Animatic generation failed to start")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/animatic/status/{job_name:path}", response_model=AnimaticStatusResponse)
+def get_animatic_status(job_name: str, agent: MarketingAgent = Depends(get_marketing_agent)):
+    t0 = time.time()
+    REQUEST_COUNTER.add(1, {"endpoint": "animatic_status"})
+    try:
+        status = agent.check_animatic_job_status(job_name)
+        LATENCY_MS.record(int((time.time()-t0)*1000), {"endpoint": "animatic_status"})
+        return AnimaticStatusResponse(**status)
+    except Exception as e:
+        ERROR_COUNTER.add(1, {"endpoint": "animatic_status"})
+        LOGGER.exception("Animatic status check failed")
         raise HTTPException(status_code=500, detail=str(e))

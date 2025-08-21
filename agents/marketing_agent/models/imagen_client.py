@@ -35,7 +35,7 @@ class ImagenClient:
         )
 
         img: Image = response.images[0]
-        png_bytes = img._image_bytes
+        png_bytes = img.image_bytes
 
         latency_ms = int((time.time() - start) * 1000)
         return png_bytes, latency_ms
