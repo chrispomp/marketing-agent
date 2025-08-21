@@ -28,7 +28,7 @@ tool_context: ToolContext
         for event in reversed(history):
             if event.author != "user" and event.content:
                 text_content = "".join(part.text for part in event.content.parts if part.text)
-                if "Objective:" in text_content and "Target Audience:" in text_content:
+                if "### Objective" in text_content and "### Target Audience" in text_content:
                     context_str = f"Use the following marketing brief as context for the script:\n\n---\n{text_content}\n---\n"
                     break
 
@@ -40,6 +40,7 @@ Your task is to write a script based on the user's prompt.
 {context_str}
 The output must follow industry-standard screenplay format. Use clear scene headings (e.g., INT. COFFEE SHOP - DAY), concise action lines, and properly formatted dialogue.
 The script should be paced appropriately for a 30-second commercial unless specified otherwise.
+Ensure the script directly reflects the provided marketing brief.
 """
     )
     runner = tool_context.invocation_context.runner

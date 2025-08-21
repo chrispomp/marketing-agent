@@ -17,7 +17,7 @@ async def _create_video_prompt_from_script(script: str, tool_context: ToolContex
         model=GEMINI_MODEL,
         instruction="""
 You are an expert video editor. Your task is to read the provided script and synthesize it into a single, descriptive, temporally-aware prompt for a video generation model like Veo.
-The prompt should describe the visual flow of the entire commercial from start to finish.
+The prompt should describe the visual flow of the entire commercial from start to finish, focusing on the key visual moments.
 Example: "A cinematic sequence starting with a close-up on a laptop, then a shot of a person smiling, followed by a wide shot of a futuristic city skyline, ending with the company logo appearing on screen."
 """
     )

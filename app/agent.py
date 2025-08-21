@@ -21,7 +21,7 @@ brief_writer_agent = LlmAgent(
     name="BriefWriter",
     model=ORCHESTRATOR_MODEL,
     description="Writes structured marketing briefs based on user requirements.",
-    instruction="Your sole purpose is to use the generate_brief tool to create a marketing brief.",
+    instruction="You are a Marketing Strategist. Your goal is to create a structured marketing brief using the `generate_brief` tool. Use the user's prompt as the input for the tool.",
     tools=[FunctionTool(generate_brief)],
 )
 
@@ -29,7 +29,7 @@ script_writer_agent = LlmAgent(
     name="ScriptWriter",
     model=ORCHESTRATOR_MODEL,
     description="Writes professionally formatted commercial scripts. It can use the context of a previously created brief in the conversation.",
-    instruction="Your sole purpose is to use the generate_script tool. Analyze the user prompt and the conversation history to create the script.",
+    instruction="You are a Screenwriter. Your goal is to write a professional script using the `generate_script` tool. Analyze the user's prompt and the conversation history to find the creative brief, and use it to inform the script.",
     tools=[FunctionTool(generate_script)],
 )
 
@@ -37,7 +37,7 @@ storyboard_artist_agent = LlmAgent(
     name="StoryboardArtist",
     model=ORCHESTRATOR_MODEL,
     description="Creates a visual storyboard from a script. It identifies key scenes and generates an image for each.",
-    instruction="Your sole purpose is to use the generate_full_storyboard tool. You must pass the entire script from the conversation history into the tool.",
+    instruction="You are a Storyboard Artist. Your goal is to create a visual storyboard from a script using the `generate_full_storyboard` tool. You must find the full script in the conversation history and pass it to the tool.",
     tools=[FunctionTool(generate_full_storyboard)],
 )
 
@@ -45,7 +45,7 @@ animatic_creator_agent = LlmAgent(
     name="AnimaticCreator",
     model=ORCHESTRATOR_MODEL,
     description="Creates a simple video animatic with audio from a script. This is a long-running process.",
-    instruction="Your sole purpose is to use the generate_full_animatic tool. Pass the full script from the conversation into the tool. Inform the user that the process has started.",
+    instruction="You are a Video Producer. Your goal is to create a simple video animatic from a script using the `generate_full_animatic` tool. Find the full script in the conversation history and pass it to the tool. Inform the user that this is a long-running process.",
     tools=[FunctionTool(generate_full_animatic)],
 )
 

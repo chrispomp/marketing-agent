@@ -21,6 +21,7 @@ For each moment, provide a concise, descriptive prompt for an image generation m
 Your output MUST be a valid JSON array of objects, where each object has two keys: 'scene' (an integer) and 'description' (a string).
 Example: [{"scene": 1, "description": "A close-up shot of a steaming cup of coffee on a modern kitchen counter, morning light streaming in."}, {"scene": 2, "description": "A woman with a joyful expression, running through a field of wildflowers."}]
 Do not output any text other than the JSON array.
+Your response must be perfect, valid JSON.
 """
     )
     runner = tool_context.invocation_context.runner
@@ -33,9 +34,11 @@ Do not output any text other than the JSON array.
             break
     try:
         return json.loads(json_response)
-    except json.JSONDecodeError:
-        print(f"🔴 ERROR: Failed to decode JSON from scene parser: {json_response}")
-        return []
+    except json.JSONDecodeError as e:
+        error_message = f"Error: The scene parser returned invalid JSON. Please try again. Raw output: {json_response}"
+        print(f"🔴 {error_message}")
+        # Re-raise the exception to be caught by the main function
+        raise ValueError(error_message) from e
 
 async def _generate_image(scene_description: str, job_id: str, scene_number: int) -> str:
     """Internal helper to call the Imagen 4 API and return a GCS URL."""
