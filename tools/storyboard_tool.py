@@ -1,16 +1,20 @@
 import os
 import json
 import uuid
+import time
 import requests
 from typing import List, Dict, Any
 
 from google.adk.agents import LlmAgent
 from google.adk.tools import ToolContext
-from utils.gcp import get_gcp_token, get_api_endpoint
 
 # Pin the models for production stability
 GEMINI_MODEL = "gemini-2.5-flash"
-IMAGEN_MODEL = "imagen-4.0-generate-001" # As specified
+# This is the recommended model for quality. See https://ai.google.dev/gemini-api/docs/models/imagen
+IMAGEN_MODEL = "imagen-3.0-generate-001"
+
+# Use the official Gemini API endpoint
+GEMINI_API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
 
 async def _parse_script_for_scenes(script: str, tool_context: ToolContext) -> List[Dict[str, Any]]:
     """Internal helper to parse a script into JSON scenes using an LLM."""
@@ -41,49 +45,64 @@ Your response must be perfect, valid JSON.
         # Re-raise the exception to be caught by the main function
         raise ValueError(error_message) from e
 
-async def _generate_image(scene_description: str, job_id: str, scene_number: int) -> str:
-    """Internal helper to call the Imagen 4 API and return a GCS URL."""
-    project_id = os.getenv("GCP_PROJECT")
-    bucket_name = os.getenv("BUCKET_NAME")
+async def _poll_image_lro(operation_name: str, headers: Dict[str, str]) -> Dict[str, Any]:
+    """Polls a long-running operation for Imagen until completion."""
+    polling_url = f"{GEMINI_API_BASE_URL}/{operation_name}"
+    delay = 5  # Initial delay in seconds
 
-    if not all([project_id, bucket_name]):
-        raise ValueError("GCP_PROJECT and BUCKET_NAME environment variables must be set.")
+    while True:
+        print(f"Polling Image LRO '{operation_name}'... waiting {delay}s")
+        time.sleep(delay)
 
-    token = get_gcp_token()
-    api_endpoint = get_api_endpoint()
+        response = requests.get(polling_url, headers=headers)
+        response.raise_for_status()
+        op_status = response.json()
+
+        if op_status.get("done"):
+            print("✅ Image LRO completed successfully.")
+            return op_status
+
+        print("Image LRO not finished, polling again.")
+        delay = min(delay * 2, 30)
+
+
+async def _generate_image(scene_description: str, job_id: str, scene_number: int, tool_context: ToolContext) -> str:
+    """Internal helper to call the Imagen 3 Gemini API and return a temporary URL."""
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise ValueError("GEMINI_API_KEY environment variable must be set.")
 
     headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json; charset=utf-8",
+        "x-goog-api-key": api_key,
+        "Content-Type": "application/json",
     }
 
-    # Imagen saves outputs in a directory, we'll name the file `scene_{n}.png`
-    output_gcs_dir = f"gs://{bucket_name}/storyboards/{job_id}/"
-    output_gcs_path = f"{output_gcs_dir}scene_{scene_number}.png"
-
+    initiate_url = f"{GEMINI_API_BASE_URL}/models/{IMAGEN_MODEL}:generateImage"
     request_body = {
-        "instances": [
-            {
-                "prompt": f"{scene_description}, cinematic storyboard style, high quality, professional grade"
-            }
-        ],
-        "parameters": {
-            "sampleCount": 1,
-            "aspect_ratio": "16:9",
-            "output_gcs_uri": f"{output_gcs_dir}scene_{scene_number}", # API expects URI without extension
-            "person_generation": "allow_adult",
-            "output_mime_type": "image/png"
-        }
+        "prompt": f"A detailed, high-quality, cinematic storyboard panel. Style: professional, clean lines, dynamic composition. Scene: {scene_description}",
+        "aspect_ratio": "16:9",
+        "negative_prompt": "text, watermark, signature, ugly, deformed",
+        "person_generation": "allow_all"
     }
 
-    url = f"{api_endpoint}/projects/{project_id}/publishers/google/models/{IMAGEN_MODEL}:predict"
+    init_response = requests.post(initiate_url, headers=headers, json=request_body)
+    init_response.raise_for_status()
 
-    response = requests.post(url, headers=headers, json=request_body)
-    response.raise_for_status() # Raise an exception for bad status codes
+    operation_name = init_response.json().get("name")
+    if not operation_name:
+        raise ValueError(f"Failed to start image generation. Response: {init_response.text}")
 
-    # The API confirms the output location, but we already know it.
-    print(f"✅ Successfully generated image for scene {scene_number} at {output_gcs_path}")
-    return output_gcs_path
+    print(f"Image LRO initiated for scene {scene_number}. Operation Name: {operation_name}")
+
+    final_result = await _poll_image_lro(operation_name, headers)
+
+    image_data = final_result.get("response", {}).get("generated_images", [{}])[0]
+    if not image_data:
+        raise ValueError("API did not return image data in final LRO response.")
+
+    temp_url = image_data.get("url")
+    print(f"✅ Successfully generated temporary image URL for scene {scene_number}: {temp_url}")
+    return temp_url
 
 async def generate_full_storyboard(
     script: str,
@@ -97,7 +116,7 @@ async def generate_full_storyboard(
         tool_context: The context of the tool invocation.
 
     Returns:
-        A JSON string containing an ordered list of GCS URLs for the storyboard images.
+        A JSON string containing an ordered list of temporary URLs for the storyboard images.
     """
     scenes = await _parse_script_for_scenes(script, tool_context)
     if not scenes:
@@ -106,12 +125,16 @@ async def generate_full_storyboard(
     job_id = str(uuid.uuid4())
     image_urls = []
 
-    for scene in scenes:
+    tool_context.set_intermediate_response(f"I've parsed the script into {len(scenes)} scenes. Now, I'll start generating the images one by one. This might take a few moments.")
+
+    for i, scene in enumerate(scenes):
         try:
             description = scene.get("description")
             scene_num = scene.get("scene")
             if description and scene_num:
-                gcs_url = await _generate_image(description, job_id, scene_num)
+                tool_context.set_intermediate_response(f"Generating image for scene {scene_num}/{len(scenes)}: '{description}'...")
+                # Pass tool_context to the image generation function
+                gcs_url = await _generate_image(description, job_id, scene_num, tool_context)
                 image_urls.append({"scene": scene_num, "url": gcs_url})
         except Exception as e:
             error_message = f"Failed to generate image for scene {scene.get('scene', 'N/A')}: {e}"
